@@ -4,7 +4,7 @@ use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::str;
 fn main() {
-
+loop{
 let listener = TcpListener::bind("0.0.0.0:5400").unwrap();
 for stream in listener.incoming() {
     match stream {
@@ -17,13 +17,13 @@ for stream in listener.incoming() {
                            println!("Got data: {}", string_out);
                            streamm.write(b"ok").unwrap();
                        }
-                       Err(_) => {println!("fault");}
+                       Err(_) => {println!("fault"); break;}
                    }
                 }
-                Err(_) => {println!("Fault when reading data!");}
+                Err(_) => {println!("Fault when reading data!"); break;}
             }
         }
-        Err(e) => {println!("Connection failed with code {}", e);}
+        Err(e) => {println!("Connection failed with code {}", e); break;}
     }
 }
-}
+}}
