@@ -1,11 +1,11 @@
 //Digital Signage and Strobe systems
-use std::time::Duration;
 use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::str;
 fn main() {
+println!("starting");
 loop{
-let listener = TcpListener::bind("0.0.0.0:5400").unwrap();
+let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
 for stream in listener.incoming() {
     match stream {
         Ok(mut streamm) => {
