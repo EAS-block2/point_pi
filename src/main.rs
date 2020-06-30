@@ -15,7 +15,10 @@ for stream in listener.incoming() {
                    match str::from_utf8(&data[0..size]){
                        Ok(string_out) => {
                            println!("Got data: {}", string_out);
-                           streamm.write(b"ok").unwrap();
+                           match streamm.write(b"ok") {
+                               Ok(_) => {println!("Write success")},
+                               Err(e) => {println!("Error: {}", e)}
+                           }
                        }
                        Err(_) => {println!("fault"); break;}
                    }
