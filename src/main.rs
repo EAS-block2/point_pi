@@ -4,7 +4,6 @@ use std::io::{Read, Write};
 use std::str;
 fn main() {
 println!("starting");
-loop{
 let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
 for stream in listener.incoming() {
     match stream {
@@ -29,4 +28,4 @@ for stream in listener.incoming() {
         Err(e) => {println!("Connection failed with code {}", e); break;}
     }
 }
-}}
+}
