@@ -1,7 +1,8 @@
 //Digital Signage and Strobe systems
 use std::net::{TcpListener};
 use std::io::{Read, Write};
-use std::str;
+use std::time::Duration;
+use std::{str, thread};
 fn main() {
 println!("starting");
 let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
@@ -30,5 +31,6 @@ for stream in listener.incoming() {
         Err(e) => {println!("Connection failed with code {}", e);}
     }
 }
+thread::sleep(Duration::from_secs(1));
 }
 }
