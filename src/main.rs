@@ -7,12 +7,12 @@ fn main() {
 println!("starting");
 let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
 //listener.set_nonblocking(true).expect("Cannot set non-blocking");
-loop{
+
 for stream in listener.incoming() {
     match stream {
         Ok(mut streamm) => {
-            let mut data = vec!(0 as u8; 50);
-            match streamm.read_to_end(&mut data){
+            let mut data = [0 as u8; 50];
+            match streamm.read(&mut data){
                 Ok(size) => {
                    match str::from_utf8(&data[0..size]){
                        Ok(string_out) => {
@@ -30,6 +30,5 @@ for stream in listener.incoming() {
         }
         Err(e) => {println!("Connection failed with code {}", e);thread::sleep(Duration::from_secs(1));}
     }
-}
 }
 }
