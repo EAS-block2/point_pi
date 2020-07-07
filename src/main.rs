@@ -5,6 +5,8 @@ use std::str;
 fn main() {
 println!("starting");
 let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
+listener.set_nonblocking(true).expect("Cannot set non-blocking");
+loop{
 for stream in listener.incoming() {
     match stream {
         Ok(mut streamm) => {
@@ -25,7 +27,8 @@ for stream in listener.incoming() {
                 Err(_) => {println!("Fault when reading data!"); break;}
             }
         }
-        Err(e) => {println!("Connection failed with code {}", e); break;}
+        Err(e) => {println!("Connection failed with code {}", e);}
     }
+}
 }
 }
