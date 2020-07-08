@@ -46,8 +46,10 @@ fn main() {
                 let e = out.split(' ');
                 let mut alm = String::new();
                 for i in e{
-                    if alm.is_empty() {alm = i.to_string();}
-                    else {locations.push(i.to_string());}
+                    let ii = i.to_string();
+                    if alm.is_empty() {alm = ii}
+                    else { if locations.contains("clear"){}
+                        if !locations.contains(&ii) {locations.push(ii);}}
                 }
                 if alm.to_lowercase() == "general" {general.active = true;}
                 else if alm.to_lowercase() == "silent" {silent.active = true;}
