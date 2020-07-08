@@ -8,7 +8,8 @@ use crossbeam_channel::unbounded;
 fn main() {
     let mut general = Alarm {render_name: "General".to_string(), pin:25, active: false};
     let mut silent = Alarm {render_name: "Silent".to_string(), pin:28, active: false};
-    let alarms = vec!(general, silent);
+    let mut locations: Vec<String>;
+    //let alarms = vec!(general, silent);
     let (threadcom_s, threadcom_r) = unbounded();
     println!("starting");
     let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
@@ -37,6 +38,8 @@ fn main() {
             }}
     });
     loop{
+        println!("General: {}, Silent: {}", general.active, silent.active);
+        thread::sleep(Duration::from_millis(500));
         match threadcom_r.try_recv(){
             Ok(out) => {
                 let e = out.split(' ');
@@ -46,7 +49,8 @@ fn main() {
                     if alm.is_empty() {alm = i.to_string();}
                     else {loc = i.to_string();}
                 }
-                if alm.to_lowercase() == "general" {general.active=true};
+                if alm.to_lowercase() == "general" {general.active = true;}
+                else if alm.to_lowercase() == "silent" {silent.active = true;}
             }
             Err(_) => thread::sleep(Duration::from_secs(2)), //usually will return an error as no data has been sent
         }
