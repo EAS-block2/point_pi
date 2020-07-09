@@ -6,10 +6,9 @@ use std::{str, thread};
 use gpio::GpioOut;
 use crossbeam_channel::unbounded;
 fn main() {
-    let mut general = Alarm {render_name: "General".to_string(), pin:25, active: false};
-    let mut silent = Alarm {render_name: "Silent".to_string(), pin:28, active: false};
-    let mut locations: Vec<String> = vec!();
-    //let alarms = vec!(general, silent);
+    let mut general = Alarm {render_name: "General".to_string(), pin:25, active: false, activators: vec!()};
+    let mut silent = Alarm {render_name: "Silent".to_string(), pin:28, active: false, activators: vec!()};
+    let mut alarms = vec!(&mut general, &mut silent);
     let (threadcom_s, threadcom_r) = unbounded();
     println!("starting");
     let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
@@ -38,28 +37,35 @@ fn main() {
             }}
     });
     loop{
-        println!("General: {}, Silent: {}", general.active, silent.active);
-        println!("Locations: {:?}", locations);
         thread::sleep(Duration::from_millis(500));
         match threadcom_r.try_recv(){
             Ok(out) => {
-                let e = out.split(' ');
-                let mut alm = String::new();
-                for i in e{
-                    let ii = i.to_string();
-                    if alm.is_empty() {alm = ii}
-                    else { if locations.contains("clear"){}
-                        if !locations.contains(&ii) {locations.push(ii);}}
-                }
-                if alm.to_lowercase() == "general" {general.active = true;}
-                else if alm.to_lowercase() == "silent" {silent.active = true;}
-            }
+                let mut e = out.split(' ');
+                match e.nth(0) {Some(alm)=>{
+                for i in &mut alarms{
+                    if alm.eq(&i.render_name){
+                        match e.next(){Some(activator)=>{
+                        if activator.eq("clear"){i.clear();}
+                        else{i.activators.push(activator.to_string());}
+                        } None=>()}
+                    }}}None=>()
+                }}
             Err(_) => thread::sleep(Duration::from_secs(2)), //usually will return an error as no data has been sent
+        }
+        for i in &mut alarms{
+            i.update();
+            println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
         }
     }
 }
 struct Alarm{
     render_name: String,
-    pin: u8,
-    active: bool
+    pin: u16,
+    active: bool,
+    activators: Vec<String>
+}
+impl Alarm{
+    fn update(&mut self){self.active = !self.activators.is_empty();
+    gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active).unwrap();}
+    fn clear(&mut self){self.activators.clear();}
 }
