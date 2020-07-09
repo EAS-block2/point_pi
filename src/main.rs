@@ -11,7 +11,7 @@ fn main() {
     let mut alarms = vec!(&mut general, &mut silent);
     let (threadcom_s, threadcom_r) = unbounded();
     println!("starting");
-    let listener = TcpListener::bind("192.168.1.149:5400").unwrap();
+    let listener = TcpListener::bind("0.0.0.0:5400").unwrap();
     thread::spawn(move || {
         for stream in listener.incoming() {
             match stream {
@@ -25,7 +25,7 @@ fn main() {
                                 let msg: Vec<u8>;
                                 println!("Got data: {}", s);
                                 match threadcom_s.send(s){Ok(_)=> msg = b"ok".to_vec(), Err(e)=>{println!("{}",e); msg=b"fault".to_vec();}}
-                                match streamm.write(&msg) {
+                                match streamm.write(&msg.as_slice()) {
                                 Ok(_) => {println!("Write success")},
                                 Err(e) => {println!("Write Error: {}", e)}
                                 }}
@@ -50,7 +50,8 @@ fn main() {
                         } None=>()}
                     }}}None=>()
                 }}
-            Err(_) => thread::sleep(Duration::from_secs(2)), //usually will return an error as no data has been sent
+            Err(_) => {thread::sleep(Duration::from_secs(2));
+            println!("no new data, sleeping");} //usually will return an error as no data has been sent
         }
         for i in &mut alarms{
             i.update();
@@ -66,6 +67,6 @@ struct Alarm{
 }
 impl Alarm{
     fn update(&mut self){self.active = !self.activators.is_empty();
-    gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active).unwrap();}
+    /*gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active).unwrap();*/}
     fn clear(&mut self){self.activators.clear();}
 }
