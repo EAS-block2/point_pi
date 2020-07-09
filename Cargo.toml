@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 crossbeam-channel = "0.4"
-gpio = "0.4"
+rust_gpiozero = "0.2.0"

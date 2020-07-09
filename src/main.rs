@@ -3,7 +3,7 @@ use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::time::Duration;
 use std::{str, thread};
-use gpio::GpioOut;
+use rust_gpiozero::DigitalOutputDevice;
 use crossbeam_channel::unbounded;
 fn main() {
     let mut general = Alarm {render_name: "General".to_string(), pin:25, active: false, activators: vec!()};
@@ -61,12 +61,13 @@ fn main() {
 }
 struct Alarm{
     render_name: String,
-    pin: u16,
+    pin: u8,
     active: bool,
     activators: Vec<String>
 }
 impl Alarm{
     fn update(&mut self){self.active = !self.activators.is_empty();
-    /*gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active).unwrap();*/}
+    if self.active {DigitalOutputDevice::new(self.pin).on();}
+    else {DigitalOutputDevice::new(self.pin).off();}}
     fn clear(&mut self){self.activators.clear();}
 }
