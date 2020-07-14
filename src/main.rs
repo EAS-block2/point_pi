@@ -37,6 +37,7 @@ fn main() {
             }}
     });
     loop{
+        println!("main loop run");
         thread::sleep(Duration::from_millis(500));
         match threadcom_r.try_recv(){
             Ok(out) => {
@@ -48,7 +49,7 @@ fn main() {
                         if activator.eq("clear"){i.clear();}
                         else{i.activators.push(activator.to_string());}
                         } None=>()}
-                    }}}None=>()
+                    }}}None=>{println!("bad alarm data");}
                 }}
             Err(_) => {thread::sleep(Duration::from_secs(2));
             println!("no new data, sleeping");} //usually will return an error as no data has been sent
