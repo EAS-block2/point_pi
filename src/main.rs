@@ -64,11 +64,11 @@ struct Alarm{
     render_name: String,
     pin: u16,
     active: bool,
-    activators: Vec<String>
+    activators: Vec<String>,
 }
 impl Alarm{
     fn update(&mut self){self.active = !self.activators.is_empty();
-    gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active).unwrap();}
+    match gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active){Ok(e)=>{println!("gpio good: {:?}", e);},Err(e)=>{println!("gpio good: {:?}", e);}}}
     fn clear(&mut self){self.activators.clear();}
     fn add(&mut self, act: String){
         if !self.activators.contains(&act) 
