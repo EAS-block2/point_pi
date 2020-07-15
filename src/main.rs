@@ -3,11 +3,11 @@ use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::time::Duration;
 use std::{str, thread};
-use gpio::GpioOut;
+use gpio_cdev::{Chip, LineRequestFlags};
 use crossbeam_channel::unbounded;
 fn main() {
-    let mut general = Alarm {render_name: "General".to_string(), pin:25, active: false, activators: vec!()};
-    let mut silent = Alarm {render_name: "Silent".to_string(), pin:28, active: false, activators: vec!()};
+    let mut general = Alarm {render_name: "General".to_string(), pin:26, active: false, activators: vec!()};
+    let mut silent = Alarm {render_name: "Silent".to_string(), pin:20, active: false, activators: vec!()};
     let mut alarms = vec!(&mut general, &mut silent);
     let (threadcom_s, threadcom_r) = unbounded();
     println!("starting");
@@ -62,13 +62,18 @@ fn main() {
 }
 struct Alarm{
     render_name: String,
-    pin: u16,
+    pin: u32,
     active: bool,
     activators: Vec<String>,
 }
 impl Alarm{
-    fn update(&mut self){self.active = !self.activators.is_empty();
-    match gpio::sysfs::SysFsGpioOutput::open(self.pin).unwrap().set_value(self.active){Ok(e)=>{println!("gpio good: {:?}", e);},Err(e)=>{println!("gpio good: {:?}", e);}}}
+    fn update(&mut self) -> gpio_cdev::errors::Result<()> {self.active = !self.activators.is_empty();
+        let mut chip = Chip::new("/dev/gpiochip0")?;
+        let outln = chip.get_line(self.pin)?;
+        let output = outln.request(LineRequestFlags::OUTPUT, 0, "point-software")?;
+        output.set_value(self.active as u8)?;
+        Ok(())
+    }
     fn clear(&mut self){self.activators.clear();}
     fn add(&mut self, act: String){
         if !self.activators.contains(&act) 
