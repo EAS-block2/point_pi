@@ -55,7 +55,8 @@ fn main() {
             println!("no new data, sleeping");} //usually will return an error as no data has been sent
         }
         for i in &mut alarms{
-            i.update();
+            match i.update(){Ok(st)=>{println!("GPIO success, {:?}", st);}
+            Err(e)=>{println!("GPIO failed, {}",e);}}
             println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
         }
     }
