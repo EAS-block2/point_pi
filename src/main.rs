@@ -72,7 +72,7 @@ struct Alarm{
 impl Alarm{
     fn update(&mut self) {
         self.active = !self.activators.is_empty();
-        self.pin.set_value(self.active as u8).unwrap();
+        self.pin.set_value(!self.active as u8).unwrap(); //0 is on, 1 is off
     }
     fn clear(&mut self){self.activators.clear();}
     fn add(&mut self, act: String){
