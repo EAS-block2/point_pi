@@ -1,7 +1,8 @@
 //Digital Signage and Strobe systems
 use std::net::{TcpListener};
 use std::io::{Read, Write};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
+use std::cmp::Ordering;
 use std::{str, thread};
 use gpio_cdev::{Chip, LineRequestFlags};
 use crossbeam_channel::unbounded;
@@ -9,8 +10,8 @@ fn main() {
     let gpio_tupple: (gpio_cdev::LineHandle, gpio_cdev::LineHandle);
     match gpio_init(26, 20) {Ok(output) => {gpio_tupple = output;} Err(error)=>{panic!(error);}}
     let (genpin, silpin) = gpio_tupple;
-    let mut general = Alarm {render_name: "General".to_string(), pin:genpin, active: false, activators: vec!()};
-    let mut silent = Alarm {render_name: "Silent".to_string(), pin:silpin, active: false, activators: vec!()};
+    let mut general = Alarm {render_name: "General".to_string(), pin:genpin, active: false, activators: vec!(), start_time: SystemTime::UNIX_EPOCH};
+    let mut silent = Alarm {render_name: "Silent".to_string(), pin:silpin, active: false, activators: vec!(), start_time: SystemTime::UNIX_EPOCH};
     let mut alarms = vec!(&mut general, &mut silent);
     let (threadcom_s, threadcom_r) = unbounded();
     println!("starting");
@@ -60,6 +61,7 @@ fn main() {
         for i in &mut alarms{
             i.update();
             println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
+
         }
     }
 }
@@ -68,11 +70,19 @@ struct Alarm{
     pin: gpio_cdev::LineHandle,
     active: bool,
     activators: Vec<String>,
+    start_time: std::time::SystemTime,
 }
 impl Alarm{
     fn update(&mut self) {
         self.active = !self.activators.is_empty();
         self.pin.set_value(!self.active as u8).unwrap(); //0 is on, 1 is off
+        if !self.active{self.start_time = SystemTime::UNIX_EPOCH;}
+        else{if self.start_time == SystemTime::UNIX_EPOCH{self.start_time = SystemTime::now();}
+            else{
+                match SystemTime::now().duration_since(self.start_time).unwrap().as_secs().cmp(&200) {Ordering::Greater => self.clear(), //will be 7200
+                    _ => () }
+            }
+        }
     }
     fn clear(&mut self){self.activators.clear();}
     fn add(&mut self, act: String){
