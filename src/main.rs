@@ -6,8 +6,11 @@ use std::{str, thread};
 use gpio_cdev::{Chip, LineRequestFlags};
 use crossbeam_channel::unbounded;
 fn main() {
-    let mut general = Alarm {render_name: "General".to_string(), pin:26, active: false, activators: vec!()};
-    let mut silent = Alarm {render_name: "Silent".to_string(), pin:20, active: false, activators: vec!()};
+    let gpio_tupple: (gpio_cdev::LineHandle, gpio_cdev::LineHandle);
+    match gpio_init(26, 20) {Ok(output) => {gpio_tupple = output;} Err(error)=>{panic!(error);}}
+    let (genpin, silpin) = gpio_tupple;
+    let mut general = Alarm {render_name: "General".to_string(), pin:genpin, active: false, activators: vec!()};
+    let mut silent = Alarm {render_name: "Silent".to_string(), pin:silpin, active: false, activators: vec!()};
     let mut alarms = vec!(&mut general, &mut silent);
     let (threadcom_s, threadcom_r) = unbounded();
     println!("starting");
@@ -55,29 +58,33 @@ fn main() {
             println!("no new data, sleeping");} //usually will return an error as no data has been sent
         }
         for i in &mut alarms{
-            match i.update(){Ok(st)=>{println!("GPIO success, {:?}", st);}
-            Err(e)=>{println!("GPIO failed, {}",e);}}
+            i.update();
             println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
         }
     }
 }
 struct Alarm{
     render_name: String,
-    pin: u32,
+    pin: gpio_cdev::LineHandle,
     active: bool,
     activators: Vec<String>,
 }
 impl Alarm{
-    fn update(&mut self) -> gpio_cdev::errors::Result<()> {self.active = !self.activators.is_empty();
-        let mut chip = Chip::new("/dev/gpiochip0")?;
-        let outln = chip.get_line(self.pin)?;
-        let output = outln.request(LineRequestFlags::OUTPUT, 0, "point-software")?;
-        output.set_value(self.active as u8)?;
-        Ok(())
+    fn update(&mut self) {
+        self.active = !self.activators.is_empty();
+        self.pin.set_value(self.active as u8).unwrap();
     }
     fn clear(&mut self){self.activators.clear();}
     fn add(&mut self, act: String){
         if !self.activators.contains(&act) 
         {self.activators.push(act);}
     }
+}
+fn gpio_init(gen_pin: u32, sil_pin: u32) -> gpio_cdev::errors::Result<(gpio_cdev::LineHandle, gpio_cdev::LineHandle)>{
+    let mut chip = Chip::new("/dev/gpiochip0")?;
+    let genout_ln = chip.get_line(gen_pin)?;
+    let silout_ln = chip.get_line(sil_pin)?;
+    let genout = genout_ln.request(LineRequestFlags::OUTPUT, 1, "point-software")?;
+    let silout = silout_ln.request(LineRequestFlags::OUTPUT, 1, "point-software")?;
+    Ok((genout, silout))
 }
