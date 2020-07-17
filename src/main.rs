@@ -33,7 +33,7 @@ fn main() {
                                 Ok(_) => {println!("Write success")},
                                 Err(e) => {println!("Write Error: {}", e)}
                                 }}
-                            Err(_) => {println!("fault"); break;}
+                            Err(_) => {println!("bad data"); break;}
                         }}
                         Err(_) => {println!("Fault when reading data!"); break;}
                     }}
@@ -41,8 +41,7 @@ fn main() {
             }}
     });
     loop{
-        println!("main loop run");
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(200));
         match threadcom_r.try_recv(){
             Ok(out) => {
                 let mut e = out.split(' ');
@@ -55,7 +54,7 @@ fn main() {
                         } None=>()}
                     }}}None=>{println!("bad alarm data");}
                 }}
-            Err(_) => {thread::sleep(Duration::from_secs(2));
+            Err(_) => {thread::sleep(Duration::from_secs(1));
             println!("no new data, sleeping");} //usually will return an error as no data has been sent
         }
         for i in &mut alarms{
