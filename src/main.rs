@@ -30,7 +30,7 @@ fn main() {
                                 println!("Got data: {}", s);
                                 match threadcom_s.send(s){Ok(_)=> msg = b"ok".to_vec(), Err(e)=>{println!("{}",e); msg=b"fault".to_vec();}}
                                 match streamm.write(&msg.as_slice()) {
-                                Ok(_) => {println!("Write success")},
+                                Ok(_) => (),
                                 Err(e) => {println!("Write Error: {}", e)}
                                 }}
                             Err(_) => {println!("bad data"); break;}
@@ -54,8 +54,7 @@ fn main() {
                         } None=>()}
                     }}}None=>{println!("bad alarm data");}
                 }}
-            Err(_) => {thread::sleep(Duration::from_secs(1));
-            println!("no new data, sleeping");} //usually will return an error as no data has been sent
+            Err(_) => {thread::sleep(Duration::from_secs(1));} //usually will return an error as no data has been sent
         }
         for i in &mut alarms{
             i.update();
