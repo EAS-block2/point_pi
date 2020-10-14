@@ -56,11 +56,7 @@ fn main() {
                 }}
             Err(_) => {} //usually will return an error as no data has been sent
         }
-        for i in &mut alarms{
-            i.update();
-            println!("General alarm is {}, activated by {:?}", i.active, i.activators);
-
-        }
+        for i in &mut alarms{i.update();}
     }
 }
 struct Alarm{
