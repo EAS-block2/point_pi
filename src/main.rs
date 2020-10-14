@@ -27,7 +27,7 @@ fn main() {
                             Ok(string_out) => {
                                 let s: String = (&string_out).to_string();
                                 let msg: Vec<u8>;
-                                println!("Got data: {}", s);
+                                println!("Listen Thread: Got data: {}", s); //debug only
                                 match threadcom_s.send(s){Ok(_)=> msg = b"ok".to_vec(), Err(e)=>{println!("{}",e); msg=b"fault".to_vec();}}
                                 match streamm.write(&msg.as_slice()) {
                                 Ok(_) => (),
@@ -46,9 +46,11 @@ fn main() {
             Ok(out) => {
                 let mut e = out.split(' ');
                 match e.nth(0) {Some(alm)=>{
+                    println!("Main: Got alarm: {}", &alm); //debug only
                 for i in &mut alarms{
                     if alm.eq(&i.render_name){
                         match e.next(){Some(activator)=>{
+                        println!("Alarm command: {}", activator); //debug only
                         if activator.eq("clear"){i.clear();}
                         else{i.add(activator.to_string());}
                         } None=>()}
@@ -58,7 +60,7 @@ fn main() {
         }
         for i in &mut alarms{
             i.update();
-            println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
+            //println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
 
         }
     }
