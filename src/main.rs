@@ -78,8 +78,7 @@ impl Alarm{
         else{if self.start_time == SystemTime::UNIX_EPOCH{self.start_time = SystemTime::now();}
             else{
                 match SystemTime::now().duration_since(self.start_time).unwrap().as_secs().cmp(&200) 
-                {Ordering::Greater => self.clear(),
-                    _ => () }
+                {Ordering::Greater => self.clear(), _ => ()}
             }
         }
     }
