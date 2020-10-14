@@ -27,7 +27,6 @@ fn main() {
                             Ok(string_out) => {
                                 let s: String = (&string_out).to_string();
                                 let msg: Vec<u8>;
-                                println!("Listen Thread: Got data: {}", s); //debug only
                                 match threadcom_s.send(s){Ok(_)=> msg = b"ok".to_vec(), Err(e)=>{println!("{}",e); msg=b"fault".to_vec();}}
                                 match streamm.write(&msg.as_slice()) {
                                 Ok(_) => (),
@@ -46,11 +45,10 @@ fn main() {
             Ok(out) => {
                 let mut e = out.split(' ');
                 match e.nth(0) {Some(alm)=>{
-                    println!("Main: Got alarm: {}", &alm); //debug only
                 for i in &mut alarms{
                     if alm.eq(&i.render_name){
+                        &i.failsafe_reset();
                         match e.next(){Some(activator)=>{
-                        println!("Alarm command: {}", activator); //debug only
                         if activator.eq("clear"){i.clear();}
                         else{i.add(activator.to_string());}
                         } None=>()}
@@ -60,7 +58,7 @@ fn main() {
         }
         for i in &mut alarms{
             i.update();
-            //println!("{} alarm is {}, activated by {:?}", i.render_name, i.active, i.activators);
+            println!("General alarm is {}, activated by {:?}", i.active, i.activators);
 
         }
     }
@@ -79,13 +77,16 @@ impl Alarm{
         if !self.active{self.start_time = SystemTime::UNIX_EPOCH;}
         else{if self.start_time == SystemTime::UNIX_EPOCH{self.start_time = SystemTime::now();}
             else{
-                match SystemTime::now().duration_since(self.start_time).unwrap().as_secs().cmp(&200) {Ordering::Greater => self.clear(), //will be 7200
+                match SystemTime::now().duration_since(self.start_time).unwrap().as_secs().cmp(&200) 
+                {Ordering::Greater => self.clear(),
                     _ => () }
             }
         }
     }
-    fn clear(&mut self){self.activators.clear();
-    println!("\n \n \n got command to clear \n \n \n");}
+    fn failsafe_reset(&mut self){//resets the failsafe timer every time a communication is recieved
+        self.start_time = SystemTime::now();
+    }
+    fn clear(&mut self){self.activators.clear();}
     fn add(&mut self, act: String){
         if !self.activators.contains(&act) 
         {self.activators.push(act);}
