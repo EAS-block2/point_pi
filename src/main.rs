@@ -41,7 +41,7 @@ fn main() {
             }}
     });
     loop{
-        thread::sleep(Duration::from_millis(200));
+        thread::sleep(Duration::from_millis(100));
         match threadcom_r.try_recv(){
             Ok(out) => {
                 let mut e = out.split(' ');
@@ -54,7 +54,7 @@ fn main() {
                         } None=>()}
                     }}}None=>{println!("bad alarm data");}
                 }}
-            Err(_) => {thread::sleep(Duration::from_secs(1));} //usually will return an error as no data has been sent
+            Err(_) => {} //usually will return an error as no data has been sent
         }
         for i in &mut alarms{
             i.update();
@@ -82,7 +82,8 @@ impl Alarm{
             }
         }
     }
-    fn clear(&mut self){self.activators.clear();}
+    fn clear(&mut self){self.activators.clear();
+    println!("\n \n \n got command to clear \n \n \n");}
     fn add(&mut self, act: String){
         if !self.activators.contains(&act) 
         {self.activators.push(act);}
