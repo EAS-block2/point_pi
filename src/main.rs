@@ -1,4 +1,4 @@
-//Digital Signage and Strobe systems
+//Strobe systems
 use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::time::{Duration, SystemTime};
