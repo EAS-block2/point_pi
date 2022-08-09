@@ -3,10 +3,16 @@ use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::time::{Duration, SystemTime};
 use std::cmp::Ordering;
-use std::{str, thread};
+use std::{str, thread, fs::File};
 use gpio_cdev::{Chip, LineRequestFlags};
 use crossbeam_channel::unbounded;
+use log::{warn, error, info, debug};
+use simplelog;
 fn main() {
+    simplelog::CombinedLogger::init(vec![
+        simplelog::TermLogger::new(simplelog::LevelFilter::Info, simplelog::Config::default(), simplelog::TerminalMode::Mixed),
+        simplelog::WriteLogger::new(simplelog::LevelFilter::Debug, simplelog::Config::default(), File::create("/var/log/EAS.log").unwrap()),
+        ]).unwrap();
     let gpio_tupple: (gpio_cdev::LineHandle, gpio_cdev::LineHandle);
     match gpio_init(26, 20) {Ok(output) => {gpio_tupple = output;} Err(error)=>{panic!(error);}}
     let (genpin, silpin) = gpio_tupple;
@@ -14,29 +20,31 @@ fn main() {
     let mut silent = Alarm {render_name: "Silent".to_string(), pin:silpin, active: false, activators: vec!(), start_time: SystemTime::UNIX_EPOCH};
     let mut alarms = vec!(&mut general, &mut silent);
     let (threadcom_s, threadcom_r) = unbounded();
-    println!("starting");
+    info!("starting");
     let listener = TcpListener::bind("0.0.0.0:5400").unwrap();
     thread::spawn(move || {
         for stream in listener.incoming() {
             match stream {
                 Ok(mut streamm) => {
+                    debug!("Got connection");
                     let mut data = [0 as u8; 50];
                     match streamm.read(&mut data){
                         Ok(size) => {
                         match str::from_utf8(&data[0..size]){
                             Ok(string_out) => {
                                 let s: String = (&string_out).to_string();
+                                info!("Got data {}", s);
                                 let msg: Vec<u8>;
-                                match threadcom_s.send(s){Ok(_)=> msg = b"ok".to_vec(), Err(e)=>{println!("{}",e); msg=b"fault".to_vec();}}
+                                match threadcom_s.send(s){Ok(_)=> msg = b"ok".to_vec(), Err(e)=>{error!("{}",e); msg=b"fault".to_vec();}}
                                 match streamm.write(&msg.as_slice()) {
                                 Ok(_) => (),
-                                Err(e) => {println!("Write Error: {}", e)}
+                                Err(e) => {error!("Write Error: {}", e)}
                                 }}
-                            Err(_) => {println!("bad data"); break;}
+                            Err(_) => {error!("bad data"); break;}
                         }}
-                        Err(_) => {println!("Fault when reading data!"); break;}
+                        Err(_) => {error!("Fault when reading data!"); break;}
                     }}
-                Err(e) => {println!("Connection failed with code {}", e);thread::sleep(Duration::from_secs(1));}
+                Err(e) => {error!("Connection failed with code {}", e);thread::sleep(Duration::from_secs(1));}
             }}
     });
     loop{
@@ -52,7 +60,7 @@ fn main() {
                         if activator.eq("clear"){i.clear();}
                         else{i.add(activator.to_string());}
                         } None=>()}
-                    }}}None=>{println!("bad alarm data");}
+                    }}}None=>{warn!("bad alarm data");}
                 }}
             Err(_) => {} //usually will return an error as no data has been sent
         }
